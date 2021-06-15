@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { beginStroke, updateStroke } from "../../modules/currentStroke/slice";
 import { endStroke } from "../../modules/sharedActions";
@@ -19,9 +19,12 @@ function CanvasPanel() {
   const currentStroke = useSelector(currentStrokeSelector);
   const isDrawing = !!currentStroke.points.length;
 
-  const getCanvasWithContext = (canvas = canvasRef.current) => {
-    return { canvas, context: canvas?.getContext("2d") };
-  };
+  const getCanvasWithContext = useCallback(
+    (canvas = canvasRef.current) => {
+      return { canvas, context: canvas?.getContext("2d") };
+    },
+    [canvasRef]
+  );
 
   const startDrawing = ({
     nativeEvent,
@@ -38,7 +41,7 @@ function CanvasPanel() {
     requestAnimationFrame(() =>
       drawStroke(context, currentStroke.points, currentStroke.color)
     );
-  }, [currentStroke]);
+  }, [currentStroke, getCanvasWithContext]);
 
   useEffect(() => {
     const { canvas, context } = getCanvasWithContext();
@@ -52,7 +55,7 @@ function CanvasPanel() {
         drawStroke(context, stroke.points, stroke.color);
       });
     });
-  }, [historyIndex, strokes]);
+  }, [getCanvasWithContext, historyIndex, strokes]);
 
   const endDrawing = () => {
     if (isDrawing) {
@@ -82,6 +85,7 @@ function CanvasPanel() {
     context.strokeStyle = "black";
 
     clearCanvas(canvas);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
